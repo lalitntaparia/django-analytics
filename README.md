@@ -1,9 +1,8 @@
-[![Travis CI Build Status](https://travis-ci.org/analytehealth/django-analytics.svg)](https://travis-ci.org/analytehealth/django-analytics)
-
 django-analytics
 ================
 
 Django app to capture, track and display site analytics [Fork from https://github.com/analytehealth/django-analytics]
+
 This version has dropped Python 2 support and added Python 3 support.
 
 Install
