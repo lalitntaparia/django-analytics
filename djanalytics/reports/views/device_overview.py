@@ -39,8 +39,9 @@ class DeviceOverviewReport(DateRangeReportView):
             index = self.DEVICE_TYPES.index(device_type) + 1
             tmp_data[date_obj][index] += visit['device__device_type__count']
             totals[index] += visit['device__device_type__count']
+            tmp_data["Totals"] = totals
 
-        return tmp_data.values() + [totals]
+        return tmp_data.values()
 
     def _build_report_headers(self):
         return ["Date"] + [dt.capitalize() for dt in self.DEVICE_TYPES]

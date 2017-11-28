@@ -20,7 +20,6 @@ from django.template.response import TemplateResponse
 from django.views.generic.base import View, TemplateView
 
 from . import models
-import base64
 
 TRACKING_PIXEL_PATH = os.path.join(os.path.dirname(__file__), 'templates')
 
@@ -43,9 +42,8 @@ class ValidatedViewMixin(object):
         if not self.client.domain_set.exists():
             return HttpResponseBadRequest(content='No domains found for client')
 
-        print (origin)
         domain_found = self.client.domain_set.filter(name=origin).exists()
-        print (domain_found)
+	print (domain_found)
         if not domain_found:
             warnings.warn(
                 "Use of domain patterns will be removed in a future version.",
@@ -58,13 +56,6 @@ class ValidatedViewMixin(object):
                 ):
                     domain_found = True
                     break
-
-        try:
-            if "/tc/" in request.META.get('HTTP_REFERER'):
-                domain_found = True
-        except:
-            pass
-            
         if not domain_found:
             return HttpResponseForbidden(content='Invalid domain for client')
 
@@ -93,11 +84,9 @@ class CaptureEventView(View, ValidatedViewMixin):
         tracking_id = request.GET.get(
             'dti', request.session.get('dja_tracking_id')
         )
-
         user_id = request.GET.get(
             'du', request.COOKIES.get('dja_uuid')
         )
-
         data = {
             'domain': self.parsed_url.netloc,
             'protocol': self.parsed_url.scheme,
@@ -120,8 +109,7 @@ class CaptureEventView(View, ValidatedViewMixin):
         new_event = models.RequestEvent.objects.create(**data)
         if not tracking_id:
             request.session['dja_tracking_id'] = new_event.tracking_key
-        with open(os.path.join(TRACKING_PIXEL_PATH, 'tracking_pixel.png'), 'rb') as f:
-            img_data = f.read()
+        img_data = file(os.path.join(TRACKING_PIXEL_PATH, 'tracking_pixel.png')).read()
         response = HttpResponse(content=img_data, status=status, content_type='image/png')
         response.set_cookie('dja_uuid', new_event.tracking_user_id,
                             expires=datetime.now() + timedelta(days=365))

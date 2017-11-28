@@ -12,29 +12,25 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import reset_queries
 from django.db.models.aggregates import Sum, Count
-
 from djanalytics import models
+
+import pytz
 
 class Command(BaseCommand):
 
-    option_list = BaseCommand.option_list + (
-        make_option(
-            '-s', '--start', type='string',
-            help='Beginning date for request events. If not provided, '
-                 'request events from the beginning of time will be '
-                 'selected.'
-        ),
-        make_option(
-            '-e', '--end', type='string',
-            help='End date for request events. If not provided, '
-                 'up to the most recent request event will be selected.'
-        ),
-        make_option(
-            '-a', '--max-age', type='int', dest='max_age', default=30,
-            help='Max number of days in the past to look for Visit and '
-                 'PageVisit objects. Default is 30.'
-        )
-    )
+    def add_arguements(self, parser):
+        parser.add_arguement('-s', '--start', type='string',
+        help='Beginning date for request events. If not provided, '
+             'request events from the beginning of time will be '
+             'selected.')
+        parser.add_arguement('-e', '--end', type='string',
+        help='End date for request events. If not provided, '
+             'up to the most recent request event will be selected.')
+
+        parser.add_arguement('-a', '--max-age', type='int', dest='max_age', default=30,
+        help='Max number of days in the past to look for Visit and '
+             'PageVisit objects. Default is 30.')
+
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
@@ -46,6 +42,7 @@ class Command(BaseCommand):
         self.create_page_visits(start, end)
         self.calculate_page_durations()
         self.collect_visit_data()
+        self.calculate_student_conversions()
 
     def create_page_visits(self, start, end):
         page_pattern_cache = defaultdict(list)
@@ -76,9 +73,7 @@ class Command(BaseCommand):
             end = dt_parse(end)
             query_dict['created__lte'] = end
 
-        query = models.RequestEvent.objects.filter(
-            **query_dict
-        ).select_related().order_by('tracking_user_id', 'created')
+        query = models.RequestEvent.objects.filter(**query_dict).select_related().order_by('tracking_user_id', 'created')
         total_events = query.count()
         query = query.iterator()
         self.stdout.write(
@@ -89,8 +84,8 @@ class Command(BaseCommand):
             )
         )
         for cnt, request_event in enumerate(query):
+            self.stdout.write('Processed %s of %s\n' % (cnt, total_events))
             if cnt % 1000 == 0:
-                self.stdout.write('Processed %s of %s\n' % (cnt, total_events))
                 # in DEBUG mode, django holds on to all database queries
                 # this can cause memory issues in pre-production environments
                 # with large sets of data
@@ -139,7 +134,7 @@ class Command(BaseCommand):
             page_key = (request_event.path, request_event.client)
             page = page_cache.get(page_key)
             if not page:
-                page_type = None
+                page_type = models.PageType.objects.get(name="Funnel")
                 for page_pattern in page_pattern_cache[request_event.client.pk]:
                     if page_pattern.pattern.match(request_event.path):
                         page_type = page_pattern.page_type
@@ -183,12 +178,14 @@ class Command(BaseCommand):
     def calculate_page_durations(self):
         # finding all page visits with no duration
         # from the last 'max_age' days
+        dto = datetime.utcnow().replace(tzinfo=pytz.utc)
         query = models.PageVisit.objects.filter(
             duration=None,
-            request_event__created__gte=datetime.now() - timedelta(
+            request_event__created__gte=dto - timedelta(
                 days=self.max_age
             ),
         )
+        #print (query.all())
         # This looks a little messy, but makes use of python to get a distinct list
         # as opposed to the database. At least with MySQL, the 'distinct' can be
         # a performance hit.
@@ -213,6 +210,7 @@ class Command(BaseCommand):
             tracking_keys = all_visits[start_idx: start_idx+subset]
             start_idx += subset
             # finding sessions with more than one request event
+            #print (tracking_keys)
             events = list(
                 models.RequestEvent.objects.filter(
                     tracking_key__in=tracking_keys
@@ -299,7 +297,7 @@ class Command(BaseCommand):
                 update_fields = []
                 pagevisits = sorted(
                     visit.pagevisit_set.all(),
-                    cmp=lambda x, y: cmp(x.request_event.created, y.request_event.created)
+                    key=lambda x: x.request_event.created
                 )
                 if not visit.last_page or visit.last_page.pk != pagevisits[-1].pk:
                     visit.last_page = pagevisits[-1].page
@@ -308,19 +306,22 @@ class Command(BaseCommand):
                 conversion_count = 0
                 funnel_found = False
                 for page_visit in pagevisits:
+                    #print ("Entered")
                     page_patterns = page_pattern_cache.get(page_visit.page.client.pk, {})
                     # in order to count a conversion, the visitor has to have hit
                     # at least one funnel page
                     for pattern in page_patterns.get(models.PageType.FUNNEL, []):
                         if pattern.match(page_visit.page.path):
+                            #print ("Yay")
                             funnel_found = True
                             break
                     for pattern in page_patterns.get(models.PageType.CONVERSION, []):
                         m = pattern.match(page_visit.page.path)
-                        if m and len(m.groups()) > 0 and funnel_found:
-                            order_ids.append(m.group(1))
+                        if m and m.group() and funnel_found:
+                            order_ids.append(m.group())
                             funnel_found = False
                             break
+
                 conversion_count = len(set(order_ids))
                 if visit.conversion_count != conversion_count:
                     visit.conversion_count = conversion_count

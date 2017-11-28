@@ -32,6 +32,8 @@ class PageOverviewReport(DateRangeReportView):
             'duration'
         )
 
+
+
         if self.client:
             page_pattern_query = models.PagePattern.objects.filter(
                 client=self.client
@@ -71,6 +73,19 @@ class PageOverviewReport(DateRangeReportView):
         duration_idx = self._build_report_headers().index('Avg. Time on Page')
         sub_durations = defaultdict(int)
         for page in pages:
+            try:
+                ptrn = models.PagePattern.objects.all()
+                for pt in ptrn:
+                    flag = 0
+                    if pt.pattern in page['page__path']:
+                        sub_name = pt.name
+                        flag = 1
+                        break
+                if flag == 0:
+                    sub_name = page['page__path']
+            except Exception as e:
+                print (e)
+                sub_name = page['page__path']
             path = page['page__path']
             duration = 0 if page['duration'] is None else page['duration']
             for display_path, regex in page_patterns.items():
@@ -83,7 +98,7 @@ class PageOverviewReport(DateRangeReportView):
                 tmp_data[path][uniqueview_idx] += page['unique_pageviews']
             else:
                 tmp_data[path] = [
-                    path,
+                    sub_name,
                     page['pageviews'],
                     page['unique_pageviews'],
                     utils.average_duration(duration, page['pageviews']),
@@ -147,7 +162,7 @@ class PageOverviewReport(DateRangeReportView):
                 total_exits, tmp_data[path][pageview_idx]
             )
 
-        total_row = [
+        tmp_data['Totals'] = [
             "Totals",
             totals['pageviews'],
             totals['unique_pageviews'],
@@ -156,7 +171,9 @@ class PageOverviewReport(DateRangeReportView):
             utils.percentage(totals['bounces'], totals['pageviews']),
             utils.percentage(totals['exits'], totals['pageviews']),
         ]
-        return tmp_data.values() + [total_row]
+
+
+        return tmp_data.values()
 
 
     def _build_report_headers(self):

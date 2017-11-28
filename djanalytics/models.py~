@@ -36,7 +36,7 @@ class Client(models.Model):
     def _valid(self, attr, value):
         include_query = getattr(self, attr).filter(include=True)
         # if there are no include filters, the value is not excluded,
-        # otherwise the value is allowed if there is at least include filter
+        # otherwise the value is allowed if there is at least include filter 
         # for which it is valid
         include = not include_query.exists() or any(
             filt.valid(value)
@@ -49,7 +49,7 @@ class Client(models.Model):
             for filt in getattr(self, attr).filter(include=False)
         )
 
-    def __str__(self):
+    def __unicode__(self):
         return u'%s' % self.name
 
     class Meta:
@@ -130,7 +130,7 @@ class Domain(models.Model):
     client = models.ForeignKey(Client)
     web_property = models.ForeignKey('WebProperty', null=True)
 
-    def __str__(self):
+    def __unicode__(self):
         return '%s (%s)' % (self.name, self.web_property)
 
     class Meta:
@@ -141,7 +141,7 @@ class WebProperty(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
 
-    def __str__(self):
+    def __unicode__(self):
         return u'%s' % self.name
 
     class Meta:
@@ -156,11 +156,11 @@ class IPFilter(models.Model):
 
     def valid(self, ip_address):
         return self.include == (
-            ipaddress.ip_address(str(ip_address))
-            in ipaddress.ip_network(str(self.netmask))
+            ipaddress.ip_address(unicode(ip_address))
+            in ipaddress.ip_network(unicode(self.netmask))
         )
 
-    def __str__(self):
+    def __unicode__(self):
         return '%s: %s' % (self.client.name, self.netmask)
 
     class Meta:
@@ -177,8 +177,9 @@ class PathFilter(models.Model):
             return self.include
         return not self.include
 
-    def __str__(self):
+    def __unicode__(self):
         return '%s: %s' % (self.client.name, self.path_pattern)
 
     class Meta:
         app_label = 'djanalytics'
+

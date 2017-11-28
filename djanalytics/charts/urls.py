@@ -1,16 +1,16 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from djanalytics.charts.views import (
     exit_page,
     page_visit,
     referrer,
-    session_chart,
-    user_chart,
+    session,
+    user,
 )
 
 urlpatterns = [
-    url(r'^charts/session/$', session_chart, name='session_chart'),
-    url(r'^charts/user/$', user_chart, name='user_chart'),
-    url(r'^charts/page_visit/$', page_visit, name='page_visit'),
-    url(r'^charts/exit_page/$', exit_page, name='exit_page'),
-    url(r'^charts/referrer/$', referrer, name='referrer'),
+    url(r'^charts/session/$', session.SessionChart.as_view(), name='session_chart'),
+    url(r'^charts/user/$', user.UserChart.as_view(), name='user_chart'),
+    url(r'^charts/page_visit/$', page_visit.PageVisit.as_view(), name='page_visit'),
+    url(r'^charts/exit_page/$', exit_page.ExitPage.as_view(), name='exit_page'),
+    url(r'^charts/referrer/$', referrer.Referrer.as_view(), name='referrer'),
 ]

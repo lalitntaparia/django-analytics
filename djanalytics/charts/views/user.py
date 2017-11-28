@@ -30,7 +30,7 @@ class UserChart(DateRangeChartView):
         while d <= self.end_date:
             data.append( (d.strftime('%Y-%m-%d'), date_dict[d.strftime('%Y-%m-%d')]) )
             d += timedelta(days=1)
-        chart = gchart.LineChart(SimpleDataSource(data=data))
+        chart = gchart.LineChart(SimpleDataSource(data=data), height=500, width=550, options={'title': 'Unique Users', 'legend':'none'})
         context_data.update(
             {
                 'chart': chart,
@@ -39,4 +39,3 @@ class UserChart(DateRangeChartView):
         return context_data
 
 user_chart = UserChart.as_view()
-

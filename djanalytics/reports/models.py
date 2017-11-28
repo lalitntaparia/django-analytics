@@ -22,7 +22,7 @@ class PageType(CodedModel):
     class Meta:
         app_label = 'djanalytics'
 
-    def __unicode__(self):
+    def __str__(self):
         return u'%s' % self.name
 
 
@@ -32,7 +32,7 @@ class Page(models.Model):
     client = models.ForeignKey('Client')
     page_type = models.ForeignKey('PageType', null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return u'%s' % self.path
 
     class Meta:
@@ -57,7 +57,7 @@ class PagePattern(CodedModel):
         unique_together = ('pattern', 'client')
 
 
-    def __unicode__(self):
+    def __str__(self):
         return u'%s (%s) - %s' % (self.name, self.pattern, self.page_type)
 
 
@@ -82,7 +82,7 @@ class DeviceType(CodedModel):
     class Meta:
         app_label = 'djanalytics'
 
-    def __unicode__(self):
+    def __str__(self):
         return u'%s' % self.name
 
 
@@ -99,7 +99,7 @@ class Device(models.Model):
     screen_width = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True)
     screen_height = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             u'OS: %(os)s (%(os_version)s) '
             'Browser: %(browser)s (%(browser_version)s) '
@@ -175,4 +175,3 @@ class Visit(models.Model):
 
     class Meta:
         app_label = 'djanalytics'
-

@@ -28,11 +28,12 @@ class SessionChart(DateRangeChartView):
             date_dict[row['new_date'].strftime('%Y-%m-%d')] += 1
         d = self.start_date
         while d <= self.end_date:
-            data.append( (d.strftime('%Y-%m-%d'), date_dict[d.strftime('%Y-%m-%d')]) ) 
+            data.append( (d.strftime('%Y-%m-%d'), date_dict[d.strftime('%Y-%m-%d')]) )
             d += timedelta(days=1)
-        chart = gchart.LineChart(SimpleDataSource(data=data),
+        chart = gchart.LineChart(SimpleDataSource(data=data), height=500, width=570,
             options={
-                'title': 'Sessions Created'
+                'title': 'Sessions Created',
+                'legend':'none',
             })
         context_data.update(
             {
@@ -42,5 +43,3 @@ class SessionChart(DateRangeChartView):
         return context_data
 
 session_chart = SessionChart.as_view()
-
-
