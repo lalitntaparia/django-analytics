@@ -3,18 +3,19 @@
 django-analytics
 ================
 
-Django app to capture, track and display site analytics
+Django app to capture, track and display site analytics [Fork from https://github.com/analytehealth/django-analytics]
+This version has dropped Python 2 support and added Python 3 support.
 
 Install
 -------
 pip install dj-analytics
 
-Add to django configuration (before 1.7)
+Requirements
 ---------------------------
-* Add `djanalytics` to `INSTALLED_APPS` in settings.py file.
-* Run `manage.py migrate djanalytics` to create database tables.
+* Django > 1.8
+* Python 3.*
 
-Add to django configuration (1.7+)
+Add to django configuration
 ---------------------------
 * Add `djanalytics` to `INSTALLED_APPS` in settings.py file.
 * Point at correct migration module:
