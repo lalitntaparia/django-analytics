@@ -8,7 +8,7 @@ This version has dropped Python 2 support and added Python 3 support.
 
 Install
 -------
-pip install dj-analytics
+Download or Clone the repository, and copy `djanalytics` folder to your Django Project.
 
 Requirements
 ---------------------------
